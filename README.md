@@ -1,5 +1,5 @@
 # KH AV Helper  
-Helper aplication for the A/V (sound) department at congregation meetings.  
+Helper application for the A/V (sound) department at congregation meetings.  
 
 
 # Requirements  
