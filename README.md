@@ -1,19 +1,19 @@
-#KH AV Helper  
+# KH AV Helper  
 Helper aplication for the A/V (sound) department at congregation meetings.  
 
 
-#Requirements  
+# Requirements  
 * Desktop operating system: Windows, macOS, or desktop linux such as Ubuntu.  
 * Modern web browser such as Chrome or Edge.  This application has not been tested with FireFox and 
 will absolutely NOT work with Internet Explorer.
 * Basic understanding of computer operations.
 
 
-#Installation  
+# Installation  
 Simply copy the `khavhelper.html` file to anywhere on your hard-drive.  Then open the file in your favorite web browser (see requirements section).
 
 
-#Usage
+# Usage
 The following is subject to change.  
 
 Use the mouse to perform clicking operations.  
