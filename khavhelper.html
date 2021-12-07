@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>KH AV Helper</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@300&display=swap" rel="stylesheet">
+
+        <style type="text/css">
+            BODY {
+                margin: 0px;
+                background-color: #000000;
+                overflow: hidden;
+            }
+
+            #khav_config_panel {
+                position: absolute;
+                top: 35px;
+                left: 25px;
+                min-width: 200px;
+                width: 20%;
+                bottom: 35px;
+
+                border: 2px solid #80808080;
+                border-radius: 5px;
+                padding: 7px;
+
+                z-index: 10000;
+                background-color: #000000aa;
+            }
+
+
+            #khav_player_panel {
+                position: absolute;
+                background-color: #000000;
+                width: 100%;
+                max-width: 100%;
+                height:100%;
+                max-height:100%;
+                min-height: 100%;
+            }
+
+
+            #year_text {
+                display: flex;
+                width: 100%;
+                height:100%;
+                margin:auto;
+                align-items: center;
+                justify-content: center;
+                color: #eeeeee;
+                background-color: #000000;
+                font-family: 'Roboto Slab', serif;
+                font-size: x-large;
+            }
+
+
+
+            .d-none {
+                display: none !important;
+            }
+
+
+
+            .menu {
+                list-style: none;
+                padding: 0px;
+                margin: 0px;
+            }
+
+            .menu LI {
+                display: flex;
+                align-items: center;
+                padding: 4px;
+                margin-top: 3px;
+                margin-bottom: 3px;
+
+                height: 35px;
+
+                background-color: #00000000;
+            }
+
+            
+
+            .menu LI > SPAN, .menu LI > INPUT, .menu LI > BUTTON, .menu LI > DIV, .menu LI > A {
+                display: flex;
+                position: relative;
+                align-items: center;
+                width: 100%;
+                height: 100%;
+                opacity: 80%;
+                text-align: center;
+                cursor: pointer;
+
+                margin-left: 3px;
+                margin-right:3px;
+                padding: auto;
+                border: 1px solid #aaffff;
+                border-radius: 5px;
+                background-color: #80aaaa;
+            }
+
+
+            .menu LI > SPAN.active, .menu LI > INPUT.active, .menu LI > BUTTON.active, .menu LI > DIV.active, .menu LI > A.active { 
+                background-color: #aaaa80;
+                border-color: #ffffaa;
+            }
+
+
+
+            .menu LI.separator {
+                height: 6px;
+            }
+
+            .menu LI HR {
+                width: 80%;
+                height: 0px;
+                border: 0px;
+                border-top: 1px solid #808080;
+            }
+        </style>
+    </head>
+
+
+    <body>
+        <div id="khav_config_panel">
+            <input id="fileOpener" type='file' accept='image/*' multiple="multiple" class="d-none" onchange='openFile(event)'>
+            <input id="configOpener" type='file' accept='text/json' class="d-none" onchange='openConfig(event)'>
+            <a id="configDownloader" class="d-none"></a>
+            <ul class="menu">
+                <li>
+                    <input type="button" id="open_images_button" value="open files">
+                </li>
+                <li>
+                    <button id="saveConfigButton">save config</button>
+                    <button id="loadConfigButton">load config</button>
+                </li>
+
+                <li>
+                    <button id="prev_button" onclick="prevImage(event)">prev</button>
+                    <button id="next_button" onclick="nextImage(event)">next</button>
+                </li>
+                <li class="separator">
+                    <hr />
+                </li>
+            </ul>
+
+            <ul class="menu" id="assetMenu">
+                <!--<li>
+                    <button id="next_button" onclick="nextImage(event)">
+                        <span>Image #1</span>
+                    </button>
+                </li>-->
+            </ul>
+        </div>
+
+
+
+        <div id="khav_player_panel">
+            
+            <img id='output' style="width:100%; height:auto;">
+            <div id="year_text" class="d-none">
+                <span>Your strength will be in keeping calm and showing trust. - ISA. 30:15</span>
+            </div>
+        </div>
+
+
+
+        <script type="text/javascript">
+
+            // Array Remove - By John Resig (MIT Licensed)
+            Array.prototype.remove = function(from, to) {
+                var rest = this.slice((to || from) + 1 || this.length);
+                this.length = from < 0 ? this.length + from : from;
+                return this.push.apply(this, rest);
+            };
+
+
+
+            var files = [];
+            var fileIndex = 0;
+
+            document.querySelector('#open_images_button').addEventListener('click', function() {
+                document.querySelector('#fileOpener').click();
+            });
+
+            document.querySelector('#saveConfigButton').addEventListener('click', function() {
+                var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(files));
+                var dlAnchorElem = document.getElementById('configDownloader');
+                dlAnchorElem.setAttribute("href",     dataStr     );
+                dlAnchorElem.setAttribute("download", "khavhelper.json");
+                dlAnchorElem.click();
+            });
+
+            document.querySelector('#loadConfigButton').addEventListener('click', function() {
+                document.querySelector('#configOpener').click();
+            });
+
+            var openConfig = function(file) {
+                var input = file.target;
+
+                var reader = new FileReader();
+
+                reader.onload = function() {
+                    var content = reader.result;
+                    files = JSON.parse(decodeURIComponent(content));
+                    drawAssetButtons();
+                };
+                reader.readAsText(input.files[0]);
+            };
+
+            var openFile = function(file) {
+                var input = file.target;
+
+                var reader = new FileReader();
+                var readerIndex = 0;
+
+                reader.onload = function(){
+                    var dataURL = reader.result;
+                    var output = document.getElementById('output');
+                    var file = {
+                        index: files.length,
+                        fileName: input.files[readerIndex].name,
+                        dataUrl: dataURL
+                    };
+                    files.push(file);
+                    fileIndex = 0;
+
+                    
+                };
+
+                reader.addEventListener('loadend', function() {
+                    readerIndex++;
+                    if(input.files.length == readerIndex) { drawAssetButtons(); return; }
+                    reader.readAsDataURL(input.files[readerIndex]);
+                });
+
+                if(0 != input.files.length) {
+                    reader.readAsDataURL(input.files[readerIndex]);
+                }
+            };
+
+            var drawAssetButtons = function() {
+                document.querySelector('#assetMenu').innerHTML = '';
+                var findex = 0;
+                files.forEach(file => {
+                    var li = document.createElement('li');
+                    var btn = document.createElement('button');
+                    var span = document.createElement('span');
+
+                    btn.setAttribute('data-asset-index', findex + 1);
+                    span.innerText = `${findex + 1}. ${file.fileName}`;
+
+                    btn.appendChild(span);
+                    li.appendChild(btn);
+                    document.querySelector('#assetMenu').appendChild(li);
+
+                    btn.addEventListener('click', function(event) {
+                        var index = parseInt(event.currentTarget.getAttribute('data-asset-index'));
+                        showImageByIndex(index - 1);
+                        event.preventDefault;
+                        event.bubbles = false;
+                    });
+                    findex++;
+                });
+            };
+
+
+            var nextImage = function(e) {
+                showImageByIndex(fileIndex + 1)
+            };
+
+            var prevImage = function(e) {
+                showImageByIndex(fileIndex - 1);
+            };
+
+
+
+            var showImageByIndex = function(imageIndex) {
+                fileIndex = imageIndex;
+                if(fileIndex < 0) {fileIndex=files.length-1;}
+                if(files.length <= fileIndex) { fileIndex = 0;}
+                var output = document.getElementById('output');
+                output.src = files[fileIndex].dataUrl;
+
+                document.querySelectorAll(`button[data-asset-index]`).forEach(element => {
+                    element.classList.remove('active');
+                }); 
+                document.querySelector(`button[data-asset-index="${fileIndex + 1}"]`).classList.add('active');
+            };
+
+
+
+            document.onkeydown = function(evt) {
+                evt = evt || window.event;
+                var isEscape = false;
+                var isMenuToggle = false;
+                var isNextAsset = false;
+                var isPrevAsset = false;
+                var isJumpToAsset = false;
+                var isDeleteAsset = false;
+                var isHelp = false;
+                var assetIndex = 0;
+
+                if ("key" in evt) {
+                    console.log(`evt.key = '${evt.key}'`);
+                    isEscape = (evt.key === "Escape" || evt.key === "Esc");
+                    isMenuToggle = (evt.key === "`");
+                    isNextAsset = (evt.key === "ArrowRight");
+                    isPrevAsset = (evt.key === "ArrowLeft");
+                    isDeleteAsset = (evt.key === "x" || evt.key === "X");
+                    isHelp = (evt.key === "?");
+
+                    switch (evt.key) {
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                        case '6':
+                        case '7':
+                        case '8':
+                        case '9':
+                        case '0':
+                            isJumpToAsset = true;
+                        break;
+                    }
+                } else {
+                    alert('Your browser does not appear to support modern keyboard shortcuts. Please upgrade to a modern browser.');
+                    return;
+                }
+
+                if(isHelp) {
+                    alert('help is on the way!');
+                }
+
+                if(isDeleteAsset) {
+                    files.remove(fileIndex, fileIndex);
+                    drawAssetButtons();
+                }
+
+                if (isMenuToggle) {
+                    if(0 == files.length) {
+                        document.querySelector('#year_text').classList.toggle('d-none');
+                    }
+                    document.querySelector('#khav_config_panel').classList.toggle('d-none');
+                    
+                }
+                if(isJumpToAsset) {
+                    assetIndex = parseInt(evt.key);
+                    if(assetIndex == 0) { assetIndex = 10; }
+                    showImageByIndex(assetIndex - 1);
+                }
+                if(isNextAsset) {
+                    showImageByIndex(fileIndex + 1);
+                }
+                if(isPrevAsset) {
+                    showImageByIndex(fileIndex - 1);
+                }
+            };
+        </script>
+    </body>
+</html>
