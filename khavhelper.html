@@ -31,6 +31,9 @@
 
 
             #khav_player_panel {
+                display:flex;
+                align-items: center;
+                justify-content: center;
                 position: absolute;
                 background-color: #000000;
                 width: 100%;
@@ -42,6 +45,7 @@
 
 
             #year_text {
+                position: absolute;
                 display: flex;
                 width: 100%;
                 height:100%;
@@ -55,9 +59,23 @@
             }
 
 
+            #output {
+
+            }
+
+
 
             .d-none {
                 display: none !important;
+            }
+
+
+            .prioritize-width {
+                width: 100%;
+            }
+
+            .prioritize-height {
+                height: 100%;
             }
 
 
@@ -82,7 +100,7 @@
 
             
 
-            .menu LI > SPAN, .menu LI > INPUT, .menu LI > BUTTON, .menu LI > DIV, .menu LI > A {
+            .menu LI > SPAN, .menu LI > LABEL, .menu LI > INPUT, .menu LI > BUTTON, .menu LI > DIV, .menu LI > A {
                 display: flex;
                 position: relative;
                 align-items: center;
@@ -118,14 +136,26 @@
                 border: 0px;
                 border-top: 1px solid #808080;
             }
+
+
+            .fade-to-black {
+                transition: opacity 0.4s ease-in;
+                opacity: 0;
+            }
+
+            .fade-from-black {
+                transition: opacity 0.4s ease-in;
+                opacity: 1;
+            }
         </style>
     </head>
 
 
     <body>
         <div id="khav_config_panel">
-            <input id="fileOpener" type='file' accept='image/*' multiple="multiple" class="d-none" onchange='openFile(event)'>
-            <input id="configOpener" type='file' accept='text/json' class="d-none" onchange='openConfig(event)'>
+            <input id="imageFileOpener" type='file' accept='image/*' multiple="multiple" class="d-none" title="open image file(s)">
+            <input id="configFileOpener" type='file' accept='text/json' class="d-none" title="open config file" onchange='openConfig(event)'>
+
             <a id="configDownloader" class="d-none"></a>
             <ul class="menu">
                 <li>
@@ -140,28 +170,30 @@
                     <button id="prev_button" onclick="prevImage(event)">prev</button>
                     <button id="next_button" onclick="nextImage(event)">next</button>
                 </li>
+                <li>
+                    <label>
+                        <input type="checkbox" id="fadeTransitionsButton" onclick="toggleFadeTransitions(event)" checked> 
+                        enable fade transitions
+                    </label>
+                </li>
                 <li class="separator">
                     <hr />
                 </li>
             </ul>
 
-            <ul class="menu" id="assetMenu">
-                <!--<li>
-                    <button id="next_button" onclick="nextImage(event)">
-                        <span>Image #1</span>
-                    </button>
-                </li>-->
+            <ul class="menu" id="asset_menu">
+                <!-- asset menu items go here-->
             </ul>
         </div>
 
 
 
-        <div id="khav_player_panel">
-            
-            <img id='output' style="width:100%; height:auto;">
-            <div id="year_text" class="d-none">
-                <span>Your strength will be in keeping calm and showing trust. - ISA. 30:15</span>
+        <div id="khav_player_panel" class="">
+            <div id="player_image_caption" class="d-none player-caption player-image-caption"></div>
+            <div id='player_image' class="player player-image prioritize-width">
+                <img class="" style="width:100%; height:100%;" alt="">
             </div>
+            <div id="player_text" class="player player-text d-none"></div>
         </div>
 
 
@@ -175,25 +207,251 @@
                 return this.push.apply(this, rest);
             };
 
+            var config = {
+                version: "1.1.1",
+                compatability: ["1.1.0"],
+
+                settings: {
+                    isFadeTransitionsEnabled: true
+                },
+                files: new Array(),
+                fileIndex: 0,
+
+                jsonReplacer: function(key, value) {
+                    //  passed to JSON.stringify to remove
+                    //      * fileIndex
+                    //      * compatability
+                    if (key === 'fileIndex') { return undefined; }
+                    if (key === 'compatability') { return undefined; }
+
+                    return value;
+                },
 
 
-            var files = [];
-            var fileIndex = 0;
 
-            document.querySelector('#open_images_button').addEventListener('click', function() {
-                document.querySelector('#fileOpener').click();
+                loadImage: function(file) {
+                    var input = file.target;
+                    var reader = new FileReader();
+                    var readerIndex = 0;
+
+                    
+                    reader.onload = function(){
+                        var dataURL = reader.result;
+                        var file = {
+                            fileName: input.files[readerIndex].name,
+                            dataUrl: dataURL
+                        };
+                        this.files.push(file);
+                        this.fileIndex = 0;
+                    }.bind(this);
+
+                    reader.addEventListener('loadend', function() {
+                        readerIndex++;
+                        if (input.files.length == readerIndex) { 
+                            //  we've reached the end of the list of files to open.
+                            players.renderButtons();
+                            return; 
+                        }
+                        reader.readAsDataURL(input.files[readerIndex]);
+                    });
+
+                    if (0 != input.files.length) {
+                        //  begin the first file read.
+                        reader.readAsDataURL(input.files[readerIndex]);
+                    }
+                },
+
+
+                unloadImage: function(imageIndex) {
+
+                },
+
+
+                changeImageIndex: function(sourceIndex, destinationIndex) {
+
+                }
+            }
+            
+
+            var players = {
+                config: config,
+
+                "player-keys": ['image', 'year-text'],
+
+                "image": {
+                    "type": "image",
+                    "sub-type": "",
+                    "element": document.getElementById('player_image'),
+                    "caption-element": document.getElementById('player_image_caption'),
+                },
+
+                "year-text": {
+                    "type": "text",
+                    "sub-type": "year-text",
+                    "element": document.getElementById('year_text'),
+                    "caption-element": null
+                },
+
+                yearTexts: {
+                    "2021": "Your strength will be in keeping calm and showing trust. - Isaiah 30:15",
+                    "2022": "Those seeking Jehovah will lack nothing good. - Psalm 34:10"
+                },
+
+                activePlayer: null,
+
+
+
+                hidePlayers: function() {
+                    this['player-keys'].forEach(key => {
+                        this[key]?.element?.classList.add('d-none')
+                        switch(key) {
+                            case 'image':
+                                this[key].element.src = null;
+                                break;
+                        }
+                    });
+                    this.activePlayer = null
+                },
+
+
+
+                showPlayer: function(playerType) {
+                    playerType = playerType.toString().toLowerCase();
+
+                    if(this.activePlayer != this[playerType]) {
+                        this.hidePlayers();
+                        this[playerType].element.classList.remove('d-none');
+
+                        this.activePlayer = this[playerType];
+                    }
+
+                    return this[playerType];
+                },
+
+
+
+                showImage: function(imageIndex) {
+                    var player = this.showPlayer('image');
+                    this.config.fileIndex = imageIndex ?? 0;
+                    
+                    //  clamp the file index value to between 0 and {files.length - 1}
+                    if(this.config.fileIndex < 0) {this.config.fileIndex = this.config.files.length - 1;}
+                    if(this.config.files.length <= this.config.fileIndex) { this.config.fileIndex = 0;}
+                    
+                    //  set button(s) to active state
+                    //  first, remove the active state from any button if present
+                    var menuElement = document.getElementById('asset_menu');
+                    menuElement.querySelectorAll('LI > BUTTON').forEach( button => {
+                        button.classList.remove('active');
+                    });
+
+                    //  then, set the active state on the appropriate buttons
+                    menuElement.querySelectorAll(`LI > BUTTON[data-asset-index="${this.config.fileIndex}"]`).forEach(button => {
+                        button.classList.add('active');
+                    });
+
+                    
+                    //  calculate sizing priority: width or height.
+                    //      prioritize-width:  set width to 100%; height will scale proportionally
+                    //      prioritize-height: set height to 100%; width will scale proportionally
+                    //  TODO:   move prioritization calculation to image load and cache with image data
+                    var prioritizeWidth = true;
+                    var img = new Image();
+                    img.onload = function() {
+                        prioritizeWidth = (img.naturalHeight < img.naturalWidth);
+
+                        var imageElement = player.element.querySelector('IMG');
+                        if(!this.config.settings.isFadeTransitionsEnabled) {
+                            //  have to do this here so that we can be sure the image size is calculated.
+                            //  primarily important for when transitions are turned off.
+                            imageElement.src = this.config.files[fileIndex].dataUrl;
+                            setOutputPriority(prioritizeWidth);
+                        } else {
+                            // transitions are turned on.
+                            setTimeout( () => {
+                                imageElement.classList.remove('fade-from-black');
+                                imageElement.classList.add('fade-to-black');
+                                setTimeout( () => {
+                                    imageElement.src = this.config.files[this.config.fileIndex].dataUrl;
+                                    imageElement.classList.remove('fade-to-black');
+                                    imageElement.classList.add('fade-from-black');
+                                    setOutputPriority(prioritizeWidth);
+                                }, 500);
+                            }, 0);
+                        }
+                    }.bind(this);
+                    img.src = this.config.files[this.config.fileIndex].dataUrl;
+
+                    var setOutputPriority = function(prioritizeWidth) {
+                        if (prioritizeWidth) {
+                            this.activePlayer.element.classList.add('prioritize-width');
+                            this.activePlayer.element.classList.remove('prioritize-height');
+                        } else {
+                            this.activePlayer.element.classList.add('prioritize-height');
+                            this.activePlayer.element.classList.remove('prioritize-width');
+                        }
+                    }.bind(this);
+                },
+
+                renderButtons: function() {
+                    var menuElement = document.getElementById('asset_menu');
+                    //  first, remove all existing buttons
+                    menuElement.innerHTML = '';
+
+                    this.config.files.forEach( (file, fileIndex) => {
+                        var li = document.createElement('li');
+                        var btn = document.createElement('button');
+                        var span = document.createElement('span');
+
+                        btn.setAttribute('data-asset-index', fileIndex);
+                        btn.setAttribute('data-asset-key', (fileIndex + 1).toString());
+                        
+                        span.innerText = `${fileIndex + 1}. ${file.fileName}`;
+
+                        btn.appendChild(span);
+                        li.appendChild(btn);
+                        menuElement.appendChild(li);
+
+                        btn.addEventListener('click', function(event) {
+                            var imageIndex = parseInt(event.currentTarget.getAttribute('data-asset-index'));
+                            this.showImage(imageIndex);
+                            event.preventDefault;
+                            event.bubbles = false;
+                        }.bind(this));
+                    });
+                },
+
+                showText: function(text) {
+
+                },
+
+                showYearText: function(year) {
+                    var player = this.showPlayer('year-text');
+                    player.element.innerText = yearTexts[`${new Date().getFullYear().toString()}`];
+                }
+            };
+
+
+            document.getElementById('imageFileOpener').addEventListener('change', function(event) {
+                config.loadImage(event);
+            });
+
+            
+
+            document.getElementById('open_images_button').addEventListener('click', function() {
+                document.getElementById('imageFileOpener').click();
             });
 
             document.querySelector('#saveConfigButton').addEventListener('click', function() {
-                var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(files));
+                var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(config, config.jsonReplacer));
                 var dlAnchorElem = document.getElementById('configDownloader');
                 dlAnchorElem.setAttribute("href",     dataStr     );
-                dlAnchorElem.setAttribute("download", "khavhelper.json");
+                dlAnchorElem.setAttribute("download", `khavhelper - ${new Date()}.json`);
                 dlAnchorElem.click();
             });
 
             document.querySelector('#loadConfigButton').addEventListener('click', function() {
-                document.querySelector('#configOpener').click();
+                document.querySelector('#configFileOpener').click();
             });
 
             var openConfig = function(file) {
@@ -203,92 +461,38 @@
 
                 reader.onload = function() {
                     var content = reader.result;
-                    files = JSON.parse(decodeURIComponent(content));
-                    drawAssetButtons();
+                    var obj = JSON.parse(decodeURIComponent(content));
+                    console.log(obj);
+                    config.files = obj.files;
+                    config.settings = obj.settings;
+                    console.log(config);
+                    drawSettings();
+                    players.renderButtons();
+                    document.querySelector('#configFileOpener').value = null;
                 };
                 reader.readAsText(input.files[0]);
             };
 
-            var openFile = function(file) {
-                var input = file.target;
-
-                var reader = new FileReader();
-                var readerIndex = 0;
-
-                reader.onload = function(){
-                    var dataURL = reader.result;
-                    var output = document.getElementById('output');
-                    var file = {
-                        index: files.length,
-                        fileName: input.files[readerIndex].name,
-                        dataUrl: dataURL
-                    };
-                    files.push(file);
-                    fileIndex = 0;
-
-                    
-                };
-
-                reader.addEventListener('loadend', function() {
-                    readerIndex++;
-                    if(input.files.length == readerIndex) { drawAssetButtons(); return; }
-                    reader.readAsDataURL(input.files[readerIndex]);
-                });
-
-                if(0 != input.files.length) {
-                    reader.readAsDataURL(input.files[readerIndex]);
+            
+            var drawSettings = function() {
+                var fadeCheckbox = document.getElementById('fadeTransitionsButton');
+                if(config.settings.isFadeTransitionsEnabled) {
+                    console.log('create check');
+                    fadeCheckbox.checked = true;
+                } else {
+                    console.log('remove check');
+                    fadeCheckbox.checked = false;
                 }
             };
 
-            var drawAssetButtons = function() {
-                document.querySelector('#assetMenu').innerHTML = '';
-                var findex = 0;
-                files.forEach(file => {
-                    var li = document.createElement('li');
-                    var btn = document.createElement('button');
-                    var span = document.createElement('span');
 
-                    btn.setAttribute('data-asset-index', findex + 1);
-                    span.innerText = `${findex + 1}. ${file.fileName}`;
-
-                    btn.appendChild(span);
-                    li.appendChild(btn);
-                    document.querySelector('#assetMenu').appendChild(li);
-
-                    btn.addEventListener('click', function(event) {
-                        var index = parseInt(event.currentTarget.getAttribute('data-asset-index'));
-                        showImageByIndex(index - 1);
-                        event.preventDefault;
-                        event.bubbles = false;
-                    });
-                    findex++;
-                });
+            
+            var toggleFadeTransitions = function() {
+                config.settings.isFadeTransitionsEnabled = !config.settings.isFadeTransitionsEnabled;
+                drawSettings();
             };
 
-
-            var nextImage = function(e) {
-                showImageByIndex(fileIndex + 1)
-            };
-
-            var prevImage = function(e) {
-                showImageByIndex(fileIndex - 1);
-            };
-
-
-
-            var showImageByIndex = function(imageIndex) {
-                fileIndex = imageIndex;
-                if(fileIndex < 0) {fileIndex=files.length-1;}
-                if(files.length <= fileIndex) { fileIndex = 0;}
-                var output = document.getElementById('output');
-                output.src = files[fileIndex].dataUrl;
-
-                document.querySelectorAll(`button[data-asset-index]`).forEach(element => {
-                    element.classList.remove('active');
-                }); 
-                document.querySelector(`button[data-asset-index="${fileIndex + 1}"]`).classList.add('active');
-            };
-
+            
 
 
             document.onkeydown = function(evt) {
@@ -299,16 +503,20 @@
                 var isPrevAsset = false;
                 var isJumpToAsset = false;
                 var isDeleteAsset = false;
+                var isFadeTransitions = false;
+                var isShowYearText = false;
                 var isHelp = false;
                 var assetIndex = 0;
 
                 if ("key" in evt) {
                     console.log(`evt.key = '${evt.key}'`);
                     isEscape = (evt.key === "Escape" || evt.key === "Esc");
-                    isMenuToggle = (evt.key === "`");
+                    isMenuToggle = (evt.key === "`" || evt.key === "~") || isEscape;
                     isNextAsset = (evt.key === "ArrowRight");
                     isPrevAsset = (evt.key === "ArrowLeft");
                     isDeleteAsset = (evt.key === "x" || evt.key === "X");
+                    isFadeTransitions = (evt.key === "/");
+                    isShowYearText = (evt.key === "\\");
                     isHelp = (evt.key === "?");
 
                     switch (evt.key) {
@@ -334,13 +542,22 @@
                     alert('help is on the way!');
                 }
 
+                if(isShowYearText) {
+                    players.showYearText();
+                }
+
+                if(isFadeTransitions) {
+                    document.querySelector('#fadeTransitionsButton').click();
+                }
+
                 if(isDeleteAsset) {
-                    files.remove(fileIndex, fileIndex);
-                    drawAssetButtons();
+                    config.files.remove(config.fileIndex, config.fileIndex);
+                    players.renderButtons();
+                    players.hidePlayers();
                 }
 
                 if (isMenuToggle) {
-                    if(0 == files.length) {
+                    if(0 == config.files.length) {
                         document.querySelector('#year_text').classList.toggle('d-none');
                     }
                     document.querySelector('#khav_config_panel').classList.toggle('d-none');
@@ -349,14 +566,18 @@
                 if(isJumpToAsset) {
                     assetIndex = parseInt(evt.key);
                     if(assetIndex == 0) { assetIndex = 10; }
-                    showImageByIndex(assetIndex - 1);
+                    players.showImage(assetIndex - 1);
                 }
                 if(isNextAsset) {
-                    showImageByIndex(fileIndex + 1);
+                    players.showImage(config.fileIndex + 1);
                 }
                 if(isPrevAsset) {
-                    showImageByIndex(fileIndex - 1);
+                    players.showImage(config.fileIndex - 1);
                 }
+
+                evt.preventDefault;
+                evt.bubbles = false;
+                evt.cancelBubble = true;
             };
         </script>
     </body>
