@@ -27,6 +27,8 @@
 
                 z-index: 10000;
                 background-color: #000000aa;
+
+                overflow-y: auto;
             }
 
 
@@ -44,7 +46,7 @@
             }
 
 
-            #year_text {
+            #player_text {
                 position: absolute;
                 display: flex;
                 width: 100%;
@@ -288,7 +290,7 @@
                 "year-text": {
                     "type": "text",
                     "sub-type": "year-text",
-                    "element": document.getElementById('year_text'),
+                    "element": document.getElementById('player_text'),
                     "caption-element": null
                 },
 
@@ -298,6 +300,12 @@
                 },
 
                 activePlayer: null,
+
+
+
+                toggleConfigPanel: function() {
+                    document.getElementById('khav_config_panel').classList.toggle('d-none');
+                },
 
 
 
@@ -364,7 +372,7 @@
                         if(!this.config.settings.isFadeTransitionsEnabled) {
                             //  have to do this here so that we can be sure the image size is calculated.
                             //  primarily important for when transitions are turned off.
-                            imageElement.src = this.config.files[fileIndex].dataUrl;
+                            imageElement.src = this.config.files[this.config.fileIndex].dataUrl;
                             setOutputPriority(prioritizeWidth);
                         } else {
                             // transitions are turned on.
@@ -427,7 +435,7 @@
 
                 showYearText: function(year) {
                     var player = this.showPlayer('year-text');
-                    player.element.innerText = yearTexts[`${new Date().getFullYear().toString()}`];
+                    player.element.innerText = this.yearTexts[`${new Date().getFullYear().toString()}`];
                 }
             };
 
@@ -514,7 +522,7 @@
                     isMenuToggle = (evt.key === "`" || evt.key === "~") || isEscape;
                     isNextAsset = (evt.key === "ArrowRight");
                     isPrevAsset = (evt.key === "ArrowLeft");
-                    isDeleteAsset = (evt.key === "x" || evt.key === "X");
+                    isDeleteAsset = (evt.key === "x" || evt.key === "X" || evt.key === "Delete");
                     isFadeTransitions = (evt.key === "/");
                     isShowYearText = (evt.key === "\\");
                     isHelp = (evt.key === "?");
@@ -557,11 +565,7 @@
                 }
 
                 if (isMenuToggle) {
-                    if(0 == config.files.length) {
-                        document.querySelector('#year_text').classList.toggle('d-none');
-                    }
-                    document.querySelector('#khav_config_panel').classList.toggle('d-none');
-                    
+                    players.toggleConfigPanel();
                 }
                 if(isJumpToAsset) {
                     assetIndex = parseInt(evt.key);
