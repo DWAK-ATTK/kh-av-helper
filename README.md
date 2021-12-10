@@ -19,13 +19,15 @@ The following is subject to change.
 Use the mouse to perform clicking operations.  
 
 Some things require, or are easier, with the keyboard.  
-| Key  	| Description  	|
-|---	|---	|
-| `~` (tilde) 	| Show/hide menu  	|
-| `x` / `X`  	| Remove a loaded asset  	|
-| `ArrowRight`  	| Display next asset  	|
-| `ArrowLeft`  	| Display previous asset  	|
-| `1`,`2`...`0`  	| Display asset corrosponding to the number pressed (1-10)  	|
+| Key                             	| Description  	                                                                    |
+|---	                              |---	                                                                              |
+| `~` (tilde, backtick), `esc`      | Show/hide menu  	                                                                |
+| `x` / `X`, `delete`               | Remove a loaded asset  	                                                          |
+| `ArrowRight`                    	| Display next asset  	                                                            |
+| `ArrowLeft`  	                    | Display previous asset  	                                                        |
+| `/` (slash)                       | Toggle fade transitions on/off                                                    |
+| `1`,`2`...`0`                    	| Display asset corrosponding to the number pressed (1-10)                        	|
+| `\` (backslash)                  	| Display the year text                        	                                    |
 
 **open files** will *append* to the currently loaded asset list.  
 **save config** will save/download the currently loaded asset list.  
